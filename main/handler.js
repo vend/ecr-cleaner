@@ -43,10 +43,12 @@ module.exports.handler = function(event, context) {
   var toClean = process.env.REPO_TO_CLEAN.split(',');
 
   Promise.map(toClean, function (repo) {
+    console.info('Cleaning repo', { repositoryName: repo });
+
     return lib.getRepoImages({ repositoryName: repo })
-      .then(lib.filterImagesByDateThreshold)
+      .then(lib.filterImagesByDateThreshold.bind(undefined, repo))
       .then(lib.filterOutActiveImages)
-      .then(lib.deleteImages);
+      .then(lib.deleteImages.bind(undefined, repo));
   })
     .then(function (results) {
       return context.succeed(results.reduce(lib.mergeResults));
