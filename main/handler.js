@@ -1,5 +1,6 @@
 'use strict';
 
+var Promise = require('bluebird');
 var lib = require('./lib');
 
 // Lambda Handler
@@ -39,14 +40,16 @@ module.exports.handler = function(event, context) {
     return context.fail(new Error('Must set REPO_TO_CLEAN'));
   }
 
-  var params = {
-    repositoryName: process.env.REPO_TO_CLEAN
-  };
+  var toClean = process.env.REPO_TO_CLEAN.split(',');
 
-  lib.getRepoImages(params)
-    .then(lib.filterImagesByDateThreshold)
-    .then(lib.filterOutActiveImages)
-    .then(lib.deleteImages)
-    .then(context.succeed)
+  Promise.map(toClean, function (repo) {
+    return lib.getRepoImages({ repositoryName: repo })
+      .then(lib.filterImagesByDateThreshold)
+      .then(lib.filterOutActiveImages)
+      .then(lib.deleteImages);
+  })
+    .then(function (results) {
+      return context.succeed(results.reduce(lib.mergeResults));
+    })
     .catch(context.fail);
 };
