@@ -26,8 +26,15 @@ function getImageAgeDays(timestamp) {
   return (age);
 }
 
-exports.getRepoImages = function(params){
-  return ecr.listImagesAsync(params);
+exports.getRepoImages = function(params) {
+  return ecr.listImagesAsync(params)
+    .then(function (images) {
+
+      console.log(images.nextToken);
+      process.exit(62);
+
+      return Promise.resolve(images);
+    });
 };
 
 
@@ -111,7 +118,6 @@ exports.filterOutActiveImages = function(eligibleForDeletion){
     });
 };
 
-
 // Fetch all layers / image details from the repo
 // Filter out everything newer than some variable amount of days
 //   set via REPO_AGE_THRESHOLD (90 days by default)
@@ -151,4 +157,18 @@ exports.filterImagesByDateThreshold = function(images){
 
         return _.compact(eligibleForDeletion);
     });
+};
+
+// Merges two result objects to an aggregated result
+exports.mergeResults = function(result, anotherResult) {
+  if (!anotherResult) {
+    return result;
+  }
+
+  return {
+    dryRun: result.dryRun && anotherResult.dryRun,
+    failures: result.failures.concat(anotherResult.failures),
+    imagesDeleted: result.imagesDeleted.concat(anotherResult.imagesDeleted),
+    count: result.count + anotherResult.count
+  };
 };
