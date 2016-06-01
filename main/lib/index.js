@@ -26,15 +26,8 @@ function getImageAgeDays(timestamp) {
   return (age);
 }
 
-exports.getRepoImages = function(params) {
-  return ecr.listImagesAsync(params)
-    .then(function (images) {
-
-      console.log(images.nextToken);
-      process.exit(62);
-
-      return Promise.resolve(images);
-    });
+exports.getRepoImages = function(params){
+  return ecr.listImagesAsync(params);
 };
 
 
